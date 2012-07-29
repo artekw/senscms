@@ -24,7 +24,7 @@ var sens = "{{ sensors|first() }}"; // load first sensors data
 $('.' + sens).addClass('active');
 function requestData(sens) {
 $.ajax({
-    url: 'http://192.168.88.245:2233/api/{{node}}/'+ sens + '/' + days,
+    url: '/api/{{node}}/'+ sens + '/' + days,
     success: function(data) {
 		chart.series[0].setData(data);
 //		setTimeout(requestData(this), 1000);    

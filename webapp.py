@@ -11,7 +11,7 @@
 # - SSE
 # - tabelki
 
-rootSN ='/home/artek/pycode/sensnode'
+rootSN ='/home/artek/pycode/senscms'
 
 from sensnode import *
 import simplejson

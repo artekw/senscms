@@ -45,7 +45,7 @@ settings:
         port: 2000
     mysql:
         username: 'root'
-        password: 'arteqw22'
+        password: 'passwd'
         dbase_name: 'weather'
-        host: 'localhost'
+        host: '127.0.0.1'
 
