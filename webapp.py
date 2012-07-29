@@ -58,7 +58,7 @@ def get(node, sensor, limit):
 
 	result = base.query(node, sensor, limit)
 	if not result:
-		abort(400, 'No data reveived')
+		abort(400, 'No data received')
 	return result
 
 @route('/tables')
@@ -95,4 +95,4 @@ def static_js(filename):
 def static_style(filename):
 	return static_file(filename, root=rootSN + '/static/')
 
-run(host='192.168.88.245', port=2233, server='bjoern')
+run(host='0.0.0.0', port=8080, server='bjoern')
