@@ -1,0 +1,51 @@
+﻿node2:
+    sensors:
+        humi:
+            desc: 'Wilgotnosc'
+            unit: '%'
+        press:
+            desc: 'Cisnienie'
+            unit: 'kPa'
+        temp:
+            desc: 'Temperatura'
+            unit: '*C'
+        batvol:
+            desc: 'Nap. zasilania'
+            unit: 'V'
+            onlyadmin: 'true'
+        light:
+            desc: 'Jasność'
+            unit: ''
+    desc: 'Altana'
+
+node5:
+    sensors:
+        humi:
+            desc: 'Wilgotnosc'
+            unit: '%'
+        press:
+            desc: 'Cisnienie'
+            unit: 'kPa'
+        temp:
+            desc: 'Temperatura'
+            unit: '*C'
+    desc: 'Pokój'
+
+node9:
+    sensors:
+        batvol:
+            desc: 'Nap. zasilania'
+            unit: 'V'
+            onlyadmin: 'true'
+    desc: 'blip'
+
+settings:
+    server:
+        host: '127.0.0.1'
+        port: 2000
+    mysql:
+        username: 'root'
+        password: 'arteqw22'
+        dbase_name: 'weather'
+        host: 'localhost'
+
