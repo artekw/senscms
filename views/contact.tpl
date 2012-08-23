@@ -5,7 +5,7 @@
 
 <address>
 email: arteqw@gmail.com<br>
-Source code @<a href="https://github.com/artekw/sensnode-core">github</a><br>
+Source code @<a href="https://github.com/artekw/senscms">github</a><br>
 </address>
 
 Powered by:

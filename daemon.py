@@ -12,7 +12,7 @@ def signal_handler(signal, frame):
 def main():
 	print "sensnodeDaemon v0.4 started"
 	r = Reader(debug)
-	cfg = Config(debug)
+#	cfg = Config(debug)
 	b = Base(debug)
 	
 	b.createTable('node5')
