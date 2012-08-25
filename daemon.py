@@ -3,21 +3,24 @@
 
 from sensnode import *
 
-debug = False
+debug = True
+ver = 0.4
 
 def signal_handler(signal, frame):
         print 'You pressed Ctrl+C!'
         sys.exit(0)
 
 def main():
-	print "sensnodeDaemon v0.4 started"
+	print "sensnodeDaemon v%s started" % (ver)
 	r = Reader(debug)
-#	cfg = Config(debug)
+	cfg = Config(debug)
 	b = Base(debug)
 	
-	b.createTable('node5')
-	b.createTable('node2')
-	b.createTable('node9')
+	try:
+		for cfgNode in cfg.getNodesNames():
+			b.createTable(cfgNode)
+	except Exception, e:
+		sys.exit(e)
 
 	try:	
 		while True:
