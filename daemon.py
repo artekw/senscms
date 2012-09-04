@@ -3,22 +3,21 @@
 
 from sensnode import *
 
-debug = True
-ver = 0.4
+debug = False
 
 def signal_handler(signal, frame):
         print 'You pressed Ctrl+C!'
         sys.exit(0)
 
 def main():
-	print "sensnodeDaemon v%s started" % (ver)
+	print "sensnodeDaemon v%s started" % (get_version())
 	r = Reader(debug)
 	cfg = Config(debug)
 	b = Base(debug)
 	
 	try:
-		for cfgNode in cfg.getNodesNames():
-			b.createTable(cfgNode)
+		for Node in cfg.getNodesNames():
+			b.createTable(Node)
 	except Exception, e:
 		sys.exit(e)
 

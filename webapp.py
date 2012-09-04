@@ -11,11 +11,12 @@
 # - SSE
 # - tabelki
 
-rootSN ='/home/artek/pycode/senscms'
+rootSN ='/home/artek/http/sensnode.suwalki.pl'
 
 from sensnode import *
 import simplejson
-from bottle import route, error, template, response, run, static_file, jinja2_view as view, jinja2_template as template
+from bottle import route, error, template, response, request, run, static_file, jinja2_view as view, jinja2_template as template
+from collections import OrderedDict
 # import string
 
 debug = False
@@ -43,7 +44,6 @@ def graph(node):
 	
 	sensors = cfg.getSensorsNames(node)
 
-	
 	local = config[node]['desc']
 		
 	labels = [config[node]['sensors'][s]['desc'] for s in sensors]
@@ -58,13 +58,42 @@ def get(node, sensor, limit):
 
 	result = base.query(node, sensor, limit)
 	if not result:
-		abort(400, 'No data received')
+		abort(400, 'No data reveived')
 	return result
 
-@route('/tables')
+@route('/tables', method='get')
 def tables():
-	
-	return template('tables', title="Tabele")
+	'''
+	todo: poprawic sortowanie po dacie
+	http://www.datatables.net/forums/discussion/2467/need-help-for-sorting-date-with-ddmmyyyy-format/p1
+	'''
+	cfg = Config()
+	b = Base()
+
+	timeranges = OrderedDict([
+				('24h','1'),
+				('48h','2'),
+				('week','7'),
+				('month','30'),
+				('3 months','90'),
+				('year','365')
+				])
+
+	form_node = request.GET.get('node','').strip()
+	form_sensor = request.GET.get('sensor','').strip()
+	form_timerange = request.GET.get('timerange','').strip()
+	form_done = request.GET.get('done','').strip()
+
+	if request.GET.get('send','').strip():
+		try:
+			form_timerange = timeranges[form_timerange]
+		except:
+			return "error"
+
+		datatables = b.query(form_node, form_sensor, form_timerange, '1') # t=1 wiec data 'normalna'
+
+		return template('tables', nodes=cfg.getNodesNames(), done = form_done, datatables = datatables, timeranges = timeranges, title="Tabele")
+	return template('tables', nodes=cfg.getNodesNames(), done = form_done, timeranges = timeranges,  title="Tabele")
 
 @route('/contact')
 def contact():
@@ -95,4 +124,4 @@ def static_js(filename):
 def static_style(filename):
 	return static_file(filename, root=rootSN + '/static/')
 
-run(host='0.0.0.0', port=8080, server='bjoern')
+run(host='0.0.0.0', port=8080, server='gunicorn')

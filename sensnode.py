@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = 'Artur Wronowski'
-__version__ = '0.4'
+__version__ = '0.4-dev'
 __appname__ = 'sensnode-core'
 __license__ = 'GPL3'
 
@@ -20,11 +20,16 @@ __license__ = 'GPL3'
 # http://www.thomasfrank.se/mysql_to_json.html
 # http://www.mongodb.org/display/DOCS/Home
 # http://api.mongodb.org/python/current/
+# http://packages.python.org/watchdog/
 
 # TODO:
 # - testy, testy
-# - mongodb
+# - ? mongodb
 # - wysyłanie do sesnnode
+# - skanowanie pliku konfiguracji i przeładowanie daemona przy zmianach [http://packages.python.org/watchdog/]
+# - alery na maila, jabbera
+# - ujenolicic plik konfiguracyjny
+
 
 from socket import *
 import MySQLdb
@@ -42,6 +47,9 @@ try:
 	config = yaml.load(f)
 except IOError:
 	sys.exit('No config file. Bye')
+
+def get_version():
+		return __version__
 
 class Config(object):
 	"""Zarzdzanie konfiguracja w yaml"""
@@ -173,7 +181,7 @@ class Base(object):
 				sys.exit(e)
 		else:
 			if self.debug:
-				print ('Table %s exist') % (self.nodename)
+				print ('Table %s exist. Aborted.') % (self.nodename)
 
 	def addRow(self, data):
 		c = Config(debug)
@@ -213,25 +221,33 @@ class Base(object):
 						print "Data added to table %s" % self.tname
 				except MySQLdb.ProgrammingError, e:
 					print "Error %d: %s" % (e.args[0], e.args[1])
-				self.conn.commit()
+				self.conn.commit()	
 			else:
 				if self.debug:
 					print "No node in config"
 				pass
 
-	def query(self, node, sensor, limit=0):
+	def query(self, node, sensor, limit=0, t=0):
+		"""
+		from sensnode import *
+		b=Base()
+		b.query('node2', 'press', '1')
+		"""
 		self.sensor = sensor
 		self.node = node
 		self.limit = limit
-		
-		dthandler = lambda obj: calendar.timegm(obj.timetuple())*1000 if isinstance(obj, datetime.datetime) else None
+
+		if t:
+			dthandler = lambda obj: obj.strftime("%d/%m/%Y %H:%M") if isinstance(obj, datetime.datetime) else None
+		else:
+			dthandler = lambda obj: calendar.timegm(obj.timetuple())*1000 if isinstance(obj, datetime.datetime) else None
 
 		if limit == 0:
 			SQL = "SELECT date, %s FROM %s" % (self.sensor, self.node)
 		else:
 			SQL = "SELECT date, %s FROM %s WHERE date > NOW() - INTERVAL %s DAY" % (self.sensor, self.node, self.limit)
 		self.cur.execute(SQL)
-				
+
 		return simplejson.dumps(self.cur.fetchall(), default=dthandler)
 
 	def queryLast(self, nodes):

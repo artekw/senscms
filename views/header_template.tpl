@@ -54,7 +54,6 @@
 			<li class="nav-header">Punkty</li>
 			<li><a href="/graph/node2">altana[2]</a></li>
 			<li><a href="/graph/node5">pokoj[5]</a></li>
-			<li><a href="/graph/node9">blip[9]</a></li>
     </ul>
 	</div><!--/.well -->
     </div><!--/span-->
