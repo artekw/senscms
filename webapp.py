@@ -1,6 +1,7 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
+__appname__ = 'sensnode-webapp'
 
 # http://twitter.github.com/bootstrap/
 # http://dygraphs.com/
@@ -70,6 +71,7 @@ def tables():
 	cfg = Config()
 	b = Base()
 
+	# hours to days
 	timeranges = OrderedDict([
 				('24h','1'),
 				('48h','2'),
