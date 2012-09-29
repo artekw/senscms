@@ -34,28 +34,25 @@
             <span class="icon-bar"></span>
           </a>
           <a class="brand" href="/">senscms<sup><em>alpha</em></sup></a>
-          <div class="nav-collapse">
+          <div class="nav-collapse collapse">
             <ul class="nav">
               <li class="active"><a href="/">Home</a></li>
-			  <li><a href="/tables">Tabele</a></li>
-			  <li><a href="/live">Live</a></li>
-			  <li><a href="/contact">Kontakt</a></li>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Wykresy <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="/graph/node2">podworko[2]</a></li>
+                  <li><a href="/graph/node5">pokoj[5]</a></li>
+                </ul>
+              </li>
+              <li><a href="/tables">Tabele</a></li>
+              <li><a href="/live">Live</a></li>
+              <li><a href="/contact">Kontakt</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
       </div>
     </div>
-	
  <div class="container-fluid">
 	<div class="row-fluid">
-	<div class="span2">
-	<div class="well sidebar-nav">
-	<ul class="nav nav-list">
-			<li class="nav-header">Punkty</li>
-			<li><a href="/graph/node2">podworko[2]</a></li>
-			<li><a href="/graph/node5">pokoj[5]</a></li>
-    </ul>
-	</div><!--/.well -->
-    </div><!--/span-->
-	<div class="span10">
+	<div class="span12">
  
