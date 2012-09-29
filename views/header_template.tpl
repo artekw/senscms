@@ -52,7 +52,7 @@
 	<div class="well sidebar-nav">
 	<ul class="nav nav-list">
 			<li class="nav-header">Punkty</li>
-			<li><a href="/graph/node2">altana[2]</a></li>
+			<li><a href="/graph/node2">podworko[2]</a></li>
 			<li><a href="/graph/node5">pokoj[5]</a></li>
     </ul>
 	</div><!--/.well -->

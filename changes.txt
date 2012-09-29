@@ -1,0 +1,5 @@
+Changes log:
+
+v0.4-dev
+
+- restart daemona i serwera po zmianach w pliku konf
