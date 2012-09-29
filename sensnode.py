@@ -5,6 +5,8 @@ __author__ = 'Artur Wronowski'
 __version__ = '0.4-dev'
 __appname__ = 'sensnode-core'
 __license__ = 'GPL3'
+__email__ = 'arteqw@gmail.com'
+
 
 # HELP:
 # http://shallowsky.com/software/scripts/ardmonitor
@@ -18,20 +20,17 @@ __license__ = 'GPL3'
 # http://www.voidspace.org.uk/python/configobj.html
 # http://www.jqplot.com/index.php
 # http://www.thomasfrank.se/mysql_to_json.html
-# http://www.mongodb.org/display/DOCS/Home
-# http://api.mongodb.org/python/current/
-# http://packages.python.org/watchdog/
+# http://www.saltycrane.com/blog/2010/04/monitoring-filesystem-python-and-pyinotify/
 
 # TODO:
 # - testy, testy
-# - ? mongodb
-# - wysyłanie do sesnnode
-# - skanowanie pliku konfiguracji i przeładowanie daemona przy zmianach [http://packages.python.org/watchdog/]
+# - wysyłanie do sesnnode - OOK (On-Off-Keyring)
 # - alery na maila, jabbera
 # - ujenolicic plik konfiguracyjny
+# - dodawanie kolumn do istniejacej tabeli
 
 
-from socket import *
+import socket
 import MySQLdb
 import time
 import datetime
@@ -48,8 +47,21 @@ try:
 except IOError:
 	sys.exit('No config file. Bye')
 
+#########################################################
+
 def get_version():
 		return __version__
+
+def get_author():
+		return __author__
+
+def get_license():
+		return __license__
+
+def get_email():
+		return __email__
+
+########################################################
 
 class Config(object):
 	"""Zarzdzanie konfiguracja w yaml"""
@@ -80,6 +92,8 @@ class Config(object):
 				self.nodes.append(node)
 		return self.nodes
 
+########################################################
+
 class Reader(object):
 	"""Odczyt danych z punktow"""
 	def __init__(self, debug=False):
@@ -97,15 +111,18 @@ class Reader(object):
 			sys.exit(3)
 
 		try:
-			self.soc = socket(AF_INET, SOCK_STREAM)
+			self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.soc.connect((self.host, self.port))
 			if self.debug:
 				print "Connected to %s:%s" % (self.host, str(self.port))
 			self.running = True
-		except socket.timeout:
-			if self.debug:
-				print "Socket timeout."
-			self.running = False
+			
+#		except socket.timeout:
+#			if self.debug:
+#				print "Socket timeout."
+#			pass
+#			self.running = True
+			
 		except IOError as ioe:
 			if debug:
 				print "IOError catched and ignored: ", type(ioe), ioe
@@ -114,6 +131,7 @@ class Reader(object):
 			sys.exit(3)
 
 	def read(self):
+		"""Czyta z konsoli szeregowej"""
 		ret = ''
 		if self.running:
 			while True:
@@ -129,6 +147,8 @@ class Reader(object):
 
 	def __del__(self):
 		self.soc.close()
+
+########################################################
 
 class Base(object):
 	"""Zarzadzanie baza danych"""
@@ -151,6 +171,7 @@ class Base(object):
 		self.cur = self.conn.cursor()
 		
 	def createTable(self, tname):
+		"""Tworzy tabele"""
 		self.tname = tname
 		self.nodename = tname
 
@@ -184,6 +205,7 @@ class Base(object):
 				print ('Table %s exist. Aborted.') % (self.nodename)
 
 	def addRow(self, data):
+		"""Dodaje dane do tabeli"""
 		c = Config(debug)
 		self.values = []
 		self.tnow = datetime.datetime.now()
@@ -197,7 +219,7 @@ class Base(object):
 		except (simplejson.decoder.JSONDecodeError, ValueError):
 			if debug:
 				print 'Decoding JSON has failed'
-			self.nodata = True
+			self.nodata = False
 		if self.nodata:
 			pass
 			if self.debug:
@@ -205,7 +227,7 @@ class Base(object):
 		else:
 			i = str(self.jdata['nodeid'])[0]
 			if self.debug:
-				print 'Reading from %s' % i
+				print 'Get data from %s' % i
 			if i in self.nodes:
 #				if self.debug:
 #					print 'Nodes in config %s' % self.nodes			
@@ -228,11 +250,7 @@ class Base(object):
 				pass
 
 	def query(self, node, sensor, limit=0, t=0):
-		"""
-		from sensnode import *
-		b=Base()
-		b.query('node2', 'press', '1')
-		"""
+		"""Wysyla zapytanie do bazy"""
 		self.sensor = sensor
 		self.node = node
 		self.limit = limit
