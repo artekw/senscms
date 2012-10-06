@@ -27,14 +27,22 @@ try:
 	config = yaml.load(f)
 except IOError:
 	sys.exit('No config file. Bye')
-	
+
+########################################################
+
 @route('/')
 def home():
 	base = Base()
+	cfg = Config()
+
+	nodes = cfg.getNodesNames()
+	descs = cfg.getSensorDesc()
+
+	last = base.queryLast(nodes)
 	
-	last = base.queryLast(['node2','node5'])
-	
-	return template('home', last=last, title="senscms")
+	return template('home', active = 'home', last=last, nodes_menu=nodes, descs_menu = descs, title="senscms")
+
+########################################################
 
 @route('/graph/<node>')
 def graph(node):
@@ -44,23 +52,31 @@ def graph(node):
 	base = Base()
 	
 	sensors = cfg.getSensorsNames(node)
+	nodes = cfg.getNodesNames()
+	descs = cfg.getSensorDesc()
 
 	local = config[node]['desc']
-		
 	labels = [config[node]['sensors'][s]['desc'] for s in sensors]
 	units = [config[node]['sensors'][s]['unit'] for s in sensors]
 
-	return template('graph', node=node, sensors=sensors, labels=labels, units=units, local=local, title='Ostatnie 48h dla %s' % (node.upper()))
+	return template('graph', active = 'graph', nodes_menu=nodes, descs_menu = descs, node=node, sensors=sensors, labels=labels, units=units, local=local, title='Ostatnie 48h dla %s' % (node))
+
+########################################################
 
 @route('/api/<node>/<sensor>/<limit:int>', method='GET')
 def get(node, sensor, limit):
 	response.content_type = 'text/json'
 	base = Base()
+	cfg = Config()
+	nodes = cfg.getNodesNames()
+	descs = cfg.getSensorDesc()
 
 	result = base.query(node, sensor, limit)
 	if not result:
 		abort(400, 'No data reveived')
 	return result
+
+########################################################
 
 @route('/tables', method='get')
 def tables():
@@ -70,6 +86,9 @@ def tables():
 	'''
 	cfg = Config()
 	b = Base()
+
+	nodes = cfg.getNodesNames()
+	descs = cfg.getSensorDesc()
 
 	# hours to days
 	timeranges = OrderedDict([
@@ -92,19 +111,32 @@ def tables():
 		except:
 			return "error"
 
-		datatables = b.query(form_node, form_sensor, form_timerange, '1') # t=1 wiec data 'normalna'
+		datatables = b.query(form_node, form_sensor, form_timerange, '1') # utc=1 wiec data 'normalna'
 
-		return template('tables', nodes=cfg.getNodesNames(), done = form_done, datatables = datatables, timeranges = timeranges, title="Tabele")
-	return template('tables', nodes=cfg.getNodesNames(), done = form_done, timeranges = timeranges,  title="Tabele")
+		return template('tables', active = 'tables', nodes_menu=nodes, descs_menu = descs, nodes=cfg.getNodesNames(), done = form_done, datatables = datatables, timeranges = timeranges, title="Tabele")
+	return template('tables', active = 'tables', nodes_menu=nodes, descs_menu = descs, nodes=cfg.getNodesNames(), done = form_done, timeranges = timeranges,  title="Tabele")
+
+########################################################
 
 @route('/contact')
 def contact():
+	cfg = Config()
+	nodes = cfg.getNodesNames()
+	descs = cfg.getSensorDesc()
 	
-	return template('contact', title="Kontakt")	
+	return template('contact', active = 'kontakt', nodes_menu=nodes, descs_menu = descs, title="Kontakt")	
+
+########################################################
 
 @route('/live')
 def live():
-	return template('es', title="Live!")
+	cfg = Config()
+	nodes = cfg.getNodesNames()
+	descs = cfg.getSensorDesc()
+
+	return template('es', active = 'live', nodes_menu=nodes, descs_menu = descs, title="Live!")
+
+########################################################
 
 @route('/event')
 def event():
@@ -118,12 +150,18 @@ def event():
 
 	return "data: %s" % (str(last))
 
+########################################################
+
 @route('/js/:filename#.*#')
 def static_js(filename):
 	return static_file(filename, root=rootSN + '/static/js/')
-	
+
+########################################################
+
 @route('/style/:filename#.*#')
 def static_style(filename):
 	return static_file(filename, root=rootSN + '/static/')
+
+########################################################
 
 run(host='0.0.0.0', port=8080, server='gunicorn')

@@ -28,6 +28,7 @@ __email__ = 'arteqw@gmail.com'
 # - alery na maila, jabbera
 # - ujenolicic plik konfiguracyjny
 # - dodawanie kolumn do istniejacej tabeli
+# - OperationalError: (1054, "Unknown column 'press' in 'field list'")
 
 
 import socket
@@ -38,8 +39,13 @@ import calendar
 import sys
 import yaml
 import simplejson
+import logging
 
 debug = False
+logging.basicConfig(
+        format='%(asctime)-25s %(threadName)-15s %(levelname)-10s %(message)s',
+        level=logging.DEBUG,
+        datefmt='%d/%m/%Y %H:%M:%S')
 
 try:
 	f = open('daemon.yml')
@@ -70,7 +76,7 @@ class Config(object):
 		self.debug = debug
 
 	def getNodesIds(self):
-		"""Pobiera numery id nodow z konfiguracji"""
+		"""Pobiera numery id nodow z konfiguracji - lista"""
 		self.nodes = []
 
 		for node in self.config.viewkeys():
@@ -79,18 +85,28 @@ class Config(object):
 		return self.nodes
 
 	def getSensorsNames(self, node):
-		"""Pobiera nazwy czjnników dla noda"""
+		"""Pobiera nazwy czujnników dla noda"""
 		self.node = node
 		return self.config[node]['sensors'].viewkeys();
 
 	def getNodesNames(self):
-		"""Pobiera nazwy nodow z konfiguracji"""
+		"""Pobiera nazwy nodow z konfiguracji - lista"""
 		self.nodes = []
 
 		for node in self.config.viewkeys():
 			if 'node' in node:
 				self.nodes.append(node)
 		return self.nodes
+
+	def getSensorDesc(self):
+		"""Pobiera opisy nodow z konfiguracji - lista"""
+		self.descs = []
+		self.nodes = self.getNodesNames()
+
+		for n in self.nodes:
+			desc = self.config[n]['desc']
+			self.descs.append(desc)
+		return self.descs
 
 ########################################################
 
@@ -102,10 +118,10 @@ class Reader(object):
 		self.running = False
 
 		try:
-			self.host = self.config['settings']['server']['host']
-			self.port = self.config['settings']['server']['port']
+			self.host = self.config['settings']['daemon']['host']
+			self.port = self.config['settings']['daemon']['port']
 			if self.debug:
-				print "Trying connect to %s:%s" % (self.host, str(self.port))
+				logging.debug('Trying connect to %s:%s' % (self.host, str(self.port)))
 		except:
 			print "Can't read from config."
 			sys.exit(3)
@@ -114,7 +130,7 @@ class Reader(object):
 			self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.soc.connect((self.host, self.port))
 			if self.debug:
-				print "Connected to %s:%s" % (self.host, str(self.port))
+				logging.debug('Connected to %s:%s' % (self.host, str(self.port)))
 			self.running = True
 			
 #		except socket.timeout:
@@ -167,7 +183,7 @@ class Base(object):
 			print "Error %d: %s" % (e.args[0], e.args[1])
 			sys.exit (1)
 		if self.debug:
-				print "Connected to %s database" % (self.config['settings']['mysql']['dbase_name'])
+				logging.debug('Connected to %s database' % (self.config['settings']['mysql']['dbase_name']))
 		self.cur = self.conn.cursor()
 		
 	def createTable(self, tname):
@@ -202,7 +218,8 @@ class Base(object):
 				sys.exit(e)
 		else:
 			if self.debug:
-				print ('Table %s exist. Aborted.') % (self.nodename)
+#				print ('Table %s exist. Aborted.') % (self.nodename)
+				logging.debug('Table %s exist. Aborted.' % (self.nodename))
 
 	def addRow(self, data):
 		"""Dodaje dane do tabeli"""
@@ -218,16 +235,16 @@ class Base(object):
 			self.jdata = simplejson.loads(data)
 		except (simplejson.decoder.JSONDecodeError, ValueError):
 			if debug:
-				print 'Decoding JSON has failed'
+				logging.debug('Decoding JSON has failed')
 			self.nodata = False
 		if self.nodata:
 			pass
 			if self.debug:
-				print "No data from node"
+				logging.debug('No data from node')
 		else:
 			i = str(self.jdata['nodeid'])[0]
 			if self.debug:
-				print 'Get data from %s' % i
+				logging.debug('Get data from %s' % i)
 			if i in self.nodes:
 #				if self.debug:
 #					print 'Nodes in config %s' % self.nodes			
@@ -240,29 +257,31 @@ class Base(object):
 				try:
 					self.cur.execute(SQL)
 					if self.debug:
-						print "Data added to table %s" % self.tname
+						logging.debug('Data added to table %s' % self.tname)
 				except MySQLdb.ProgrammingError, e:
 					print "Error %d: %s" % (e.args[0], e.args[1])
 				self.conn.commit()	
 			else:
 				if self.debug:
-					print "No node in config"
+					logging.debug('No node in config')
 				pass
 
-	def query(self, node, sensor, limit=0, t=0):
+	def query(self, node, sensor, limit=0, utc=0):
 		"""Wysyla zapytanie do bazy"""
 		self.sensor = sensor
 		self.node = node
 		self.limit = limit
 
-		if t:
+		if utc: # data dla 'datatables'
 			dthandler = lambda obj: obj.strftime("%d/%m/%Y %H:%M") if isinstance(obj, datetime.datetime) else None
 		else:
 			dthandler = lambda obj: calendar.timegm(obj.timetuple())*1000 if isinstance(obj, datetime.datetime) else None
 
-		if limit == 0:
+		if limit == 0: # wszystkie 
 			SQL = "SELECT date, %s FROM %s" % (self.sensor, self.node)
-		else:
+		elif limit == -1: # ostatni 
+			SQL = "SELECT date, %s FROM %s ORDER BY ID DESC LIMIT 0,1" % (self.sensor, self.node)
+		else: # dni
 			SQL = "SELECT date, %s FROM %s WHERE date > NOW() - INTERVAL %s DAY" % (self.sensor, self.node, self.limit)
 		self.cur.execute(SQL)
 
