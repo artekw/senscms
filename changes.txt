@@ -1,5 +1,7 @@
 Changes log:
 
 v0.4-dev
-
-- restart daemona i serwera po zmianach w pliku konf
+- [daemon] restart daemona i serwera po zmianach w pliku konfiguracyjnym wykorzystując inotify
+- [webapp] wstępna selekca zakresu wyświetlanych danych
+- [webapp] konfiguracja portu, serwera, hostu
+- [webapp] informacja o ladowanie danych do wykresu 

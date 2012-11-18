@@ -6,8 +6,8 @@
     <meta name="description" content="senscms">
     <meta name="author" content="arteq">
 	
-    <link href="/style/bootstrap.css" rel="stylesheet" type="text/css"></link>
-    <link href="/style/DT_bootstrap.css" rel="stylesheet" type="text/css"></link>
+    <link href="/static/bootstrap.css" rel="stylesheet" type="text/css"></link>
+    <link href="/static/DT_bootstrap.css" rel="stylesheet" type="text/css"></link>
     <style type="text/css">
       body {
         padding-top: 60px;
@@ -16,37 +16,30 @@
       
     </style>
     <link rel="shortcut icon" href="/style/favicon.ico">
-    <link href="/style/bootstrap-responsive.css" rel="stylesheet" type="text/css"></link>
+    <link href="/static/bootstrap-responsive.css" rel="stylesheet" type="text/css"></link>
+    <link href="/static/custom.css" rel="stylesheet" type="text/css"></link>
     <script language="javascript" type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
     <script language="javascript" type="text/javascript" src="/js/highstock.js"></script>
     <script language="javascript" type="text/javascript" src="/js/jquery.dataTables.js"></script>
-    <script language="javascript" type="text/javascript" src="/js/es.js"></script>
     <script language="javascript" type="text/javascript" src="/js/bootstrap.js"></script>
-    <script language="javascript" type="text/javascript" src="/js/knockout-2.1.0.js"></script>
  </head>
  <body>
- <div class="navbar navbar-fixed-top">
+ <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container-fluid">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
           <a class="brand" href="/">senscms<sup><em>alpha</em></sup></a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li class="active"><a href="/">Home</a></li>
-              <li class="dropdown">
+              <li {% if active == 'home' %} class="active"{% endif %}><a href="/">Status</a></li>
+              <li  class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Wykresy <b class="caret"></b></a>
                 <ul class="dropdown-menu">
-                  <li><a href="/graph/node2">podworko[2]</a></li>
-                  <li><a href="/graph/node5">pokoj[5]</a></li>
+                  {% for n in nodes_menu %}
+                    <li><a href="/graph/{{n}}/2">{{n}}({{descs_menu[loop.index0]}})</a></li>
+                  {% endfor %}
                 </ul>
               </li>
-              <li><a href="/tables">Tabele</a></li>
-              <li><a href="/live">Live</a></li>
-              <li><a href="/contact">Kontakt</a></li>
+              <li {% if active == 'kontakt' %}class="active"{% endif %}><a  href="/contact">Kontakt</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -54,5 +47,5 @@
     </div>
  <div class="container-fluid">
 	<div class="row-fluid">
-	<div class="span12">
+	
  

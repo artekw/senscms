@@ -1,0 +1,7 @@
+#loader {
+/*	display: block;
+	position: fixed;
+	top: 270px;
+	left: 260px; */
+	z-index: 5000; 
+}

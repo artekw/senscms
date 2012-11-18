@@ -3,6 +3,7 @@
         humi:
             desc: 'Wilgotnosc'
             unit: '%'
+            alerton: '90' # not implemented
         press:
             desc: 'Cisnienie'
             unit: 'kPa'
@@ -12,26 +13,26 @@
         batvol:
             desc: 'Nap. zasilania'
             unit: 'V'
-            onlyadmin: 'true'
-        light:
-            desc: 'Jasność'
+        lobat:
+            desc: 'Alarm baterii'
             unit: ''
-    desc: 'Altana'
+            ongraph: 'false' # not implemented
 
-node5:
-    sensors:
-        temp:
-            desc: 'Temperatura'
-            unit: '*C'
-    desc: 'Pokój'
+    desc: 'nazwa'
 
 settings:
-    server:
-        host: '192.168.88.8'
+    daemon:
+        host: '192.168.88.15'
         port: 2000
     mysql:
-        username: 'root'
-        password: 'password'
-        dbase_name: 'weather'
+        username: 'admin'
+        password: 'pass'
+        dbase_name: 'base'
         host: '127.0.0.1'
-
+    alerts:
+        enabled: 'false' # not implemented
+        email: 'a@b.c' # not implemented
+    webapp:
+        host: '0.0.0.0'
+        port: '8080'
+        server: 'bjoern'

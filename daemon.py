@@ -23,6 +23,7 @@ class EventHandler(pyinotify.ProcessEvent):
 		self.s = main_app()
 		self.s.setName('main-thread')
 		self.s.setDaemon(True)
+		self.s.test()
 		self.s.start()
 		self.s.webapp()
 
@@ -30,7 +31,7 @@ class EventHandler(pyinotify.ProcessEvent):
 		'''
 		Event after close saved file
 		'''
-		logging.info('File saved %s' % (event.pathname)
+		logging.info('File saved %s' % (event.pathname))
 		if self.s.isAlive():
 			self.s.stop()
 			self.s.join()
@@ -39,6 +40,7 @@ class EventHandler(pyinotify.ProcessEvent):
 			self.s = main_app()
 			self.s.setName('main-thread')
 			self.s.setDaemon(True)
+			self.s.test()
 			self.s.start()
 			self.s.webapp()
 
@@ -50,6 +52,17 @@ class main_app(threading.Thread):
 		threading.Thread.__init__(self)
 		self.running = True
 
+	def test(self):
+		'''
+		Test connection to host
+		'''
+		r = Reader()
+
+		if r.is_connected():
+			self.running = True
+		else:
+			self.running = False
+
 	def stop(self):
 		'''
 		Set stop flag for thread
@@ -60,10 +73,12 @@ class main_app(threading.Thread):
 		'''
 		Function to start webapp
 		'''
-		logging.info('Start WebApp')
-		self.webappp = subprocess.Popen(args=["python2", "webapp.py"], shell=False)
-		time.sleep(2)
-		logging.info('WebApp pid is %s' % (self.webappp.pid))
+		if self.running:
+			logging.info('Start WebApp')
+			# todo: config webapp filename
+			self.webappp = subprocess.Popen(args=["python2", "webapp.py"], shell=False)
+			time.sleep(2)
+			logging.info('WebApp pid is %s' % (self.webappp.pid))
 
 	def run(self):
 		'''
@@ -73,6 +88,7 @@ class main_app(threading.Thread):
 		r = Reader(debug)
 		cfg = Config(debug)
 		b = Base(debug)
+
 		try:
 			for Node in cfg.getNodesNames():
 				b.createTable(Node)
@@ -80,8 +96,9 @@ class main_app(threading.Thread):
 			sys.exit(e)
 
 		while self.running:
-			raw = r.read()
+			raw = r.serialread()
 			b.addRow(raw)
+			
 
 class file_monitor(threading.Thread):
 	def __init__(self):

@@ -7,21 +7,6 @@ __appname__ = 'sensnode-core'
 __license__ = 'GPL3'
 __email__ = 'arteqw@gmail.com'
 
-
-# HELP:
-# http://shallowsky.com/software/scripts/ardmonitor
-# http://mysql-python.sourceforge.net/MySQLdb.html
-# http://www.python.org/dev/peps/pep-0249/
-# http://www.python.org/dev/peps/pep-0257/
-# http://simplejson.readthedocs.org/en/latest/index.html#exceptions
-# http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
-# http://datatables.net/index
-# SELECT DATE(date) AS theday, AVG(press) AS avgtmp FROM node2 WHERE DATE(date) BETWEEN NOW() - INTERVAL 7 DAY AND NOW() GROUP BY theday;
-# http://www.voidspace.org.uk/python/configobj.html
-# http://www.jqplot.com/index.php
-# http://www.thomasfrank.se/mysql_to_json.html
-# http://www.saltycrane.com/blog/2010/04/monitoring-filesystem-python-and-pyinotify/
-
 # TODO:
 # - testy, testy
 # - wysyłanie do sesnnode - OOK (On-Off-Keyring)
@@ -77,11 +62,8 @@ class Config(object):
 
 	def getNodesIds(self):
 		"""Pobiera numery id nodow z konfiguracji - lista"""
-		self.nodes = []
 
-		for node in self.config.viewkeys():
-			if 'node' in node:
-				self.nodes.append(str(node)[4:])
+		self.nodes = [ str(node)[4:] for node in self.config.viewkeys() if 'node' in node ]
 		return self.nodes
 
 	def getSensorsNames(self, node):
@@ -91,11 +73,8 @@ class Config(object):
 
 	def getNodesNames(self):
 		"""Pobiera nazwy nodow z konfiguracji - lista"""
-		self.nodes = []
 
-		for node in self.config.viewkeys():
-			if 'node' in node:
-				self.nodes.append(node)
+		self.nodes = [node for node in self.config.viewkeys() if 'node' in node ]
 		return self.nodes
 
 	def getSensorDesc(self):
@@ -103,8 +82,8 @@ class Config(object):
 		self.descs = []
 		self.nodes = self.getNodesNames()
 
-		for n in self.nodes:
-			desc = self.config[n]['desc']
+		for node in self.nodes:
+			desc = self.config[node]['desc']
 			self.descs.append(desc)
 		return self.descs
 
@@ -115,7 +94,7 @@ class Reader(object):
 	def __init__(self, debug=False):
 		self.config = config
 		self.debug = debug
-		self.running = False
+		self.connected = False
 
 		try:
 			self.host = self.config['settings']['daemon']['host']
@@ -131,25 +110,20 @@ class Reader(object):
 			self.soc.connect((self.host, self.port))
 			if self.debug:
 				logging.debug('Connected to %s:%s' % (self.host, str(self.port)))
-			self.running = True
-			
-#		except socket.timeout:
-#			if self.debug:
-#				print "Socket timeout."
-#			pass
-#			self.running = True
-			
-		except IOError as ioe:
-			if debug:
-				print "IOError catched and ignored: ", type(ioe), ioe
-		except:
-			print "Can't connect."
+			self.connected = True
+	
+		except socket.error:
+			logging.warning("Can't connect to %s:%s" % (self.host, str(self.port)))
+			self.connected = False
 			sys.exit(3)
 
-	def read(self):
+	def is_connected(self):
+		return self.connected
+
+	def serialread(self):
 		"""Czyta z konsoli szeregowej"""
 		ret = ''
-		if self.running:
+		if self.connected:
 			while True:
 				c = self.soc.recv(1)			
 				if c == '\n' or c == '':
@@ -157,9 +131,6 @@ class Reader(object):
 				else:
 					ret += c
 			return ret
-		else:
-			print "Not connected."
-			sys.exit(3)
 
 	def __del__(self):
 		self.soc.close()
@@ -203,22 +174,21 @@ class Base(object):
 							slist.append(i)
 				except Exception, e:
 					sys.exit(e)
-				SQL = "CREATE TABLE %s (id serial PRIMARY KEY, date timestamp, %s varchar(10))" % (self.tname, " varchar(10), ".join(str(x) for x in slist))
-				if self.debug:
-					print 'Query %s' % SQL
+					# float temp ?
+				SQL = "CREATE TABLE %s (id serial PRIMARY KEY, date timestamp, %s varchar(10))" % (self.tname, " float, ".join(str(x) for x in slist))
 				try:
+					print SQL
 					self.cur.execute(SQL);
 				except MySQLdb.DatabaseError, e:
 					print "Error %d: %s" % (e.args[0], e.args[1])
 					print "Cannot to create table, check your configuration file"
 					sys.exit (1)
 				if self.debug:		
-					print ('Create table %s') % (self.nodename)
+					logging.debug('Create table %s' % (self.nodename))
 			except Exception, e:
 				sys.exit(e)
 		else:
 			if self.debug:
-#				print ('Table %s exist. Aborted.') % (self.nodename)
 				logging.debug('Table %s exist. Aborted.' % (self.nodename))
 
 	def addRow(self, data):
@@ -245,9 +215,7 @@ class Base(object):
 			i = str(self.jdata['nodeid'])[0]
 			if self.debug:
 				logging.debug('Get data from %s' % i)
-			if i in self.nodes:
-#				if self.debug:
-#					print 'Nodes in config %s' % self.nodes			
+			if i in self.nodes:		
 				self.tname = "node%s" % (i)
 				self.cols = self.config['node'+i]['sensors'].keys()
 				for j in self.cols:
@@ -281,14 +249,16 @@ class Base(object):
 			SQL = "SELECT date, %s FROM %s" % (self.sensor, self.node)
 		elif limit == -1: # ostatni 
 			SQL = "SELECT date, %s FROM %s ORDER BY ID DESC LIMIT 0,1" % (self.sensor, self.node)
-		else: # dni
+		else: # okreslone dni
 			SQL = "SELECT date, %s FROM %s WHERE date > NOW() - INTERVAL %s DAY" % (self.sensor, self.node, self.limit)
 		self.cur.execute(SQL)
 
 		return simplejson.dumps(self.cur.fetchall(), default=dthandler)
 
 	def queryLast(self, nodes):
-		"""Pobiera ostatnie odczyty dla wybranych nodow - dane dla DataTables"""
+		"""Pobiera ostatnie odczyty dla wybranych nodow - dane dla DataTables
+		todo: wyjatek - gdy pusta baza = brak danych = crash
+		"""
 		self.nodes = nodes
 		self.data = []
 		dthandler = lambda obj: obj.strftime("%d/%m/%Y %H:%M") if isinstance(obj, datetime.datetime) else None

@@ -3,21 +3,16 @@
 
 __appname__ = 'sensnode-webapp'
 
-# http://twitter.github.com/bootstrap/
-# http://dygraphs.com/
-# http://datatables.net/forums/discussion/6655/dynamically-apply-datatables-for-subsequent-requests/p1
-
 # TODO:
 # - odczyt z yaml - desc, unit
 # - SSE
-# - tabelki
+# - polskie znaki
 
 rootSN ='/home/artek/http/sensnode.suwalki.pl'
 
 from sensnode import *
 import simplejson
-from bottle import route, error, template, response, request, run, static_file, jinja2_view as view, jinja2_template as template
-from collections import OrderedDict
+from bottle import route, abort, error, template, response, request, run, static_file, jinja2_view as view, jinja2_template as template
 # import string
 
 debug = False
@@ -27,6 +22,17 @@ try:
 	config = yaml.load(f)
 except IOError:
 	sys.exit('No config file. Bye')
+
+timerange = {
+		'1':'24h',
+		'2':'48h',
+		'7':'tydzien',
+		'14':'2 tygodnie',
+		'30':'miesiac',
+		'90':'3 miesiace',
+		'180':'6 miesiecy',
+		'365':'rok'
+}
 
 ########################################################
 
@@ -40,81 +46,50 @@ def home():
 
 	last = base.queryLast(nodes)
 	
-	return template('home', active = 'home', last=last, nodes_menu=nodes, descs_menu = descs, title="senscms")
+	return template('home', active = 'home', last=last, nodes_menu=nodes, descs_menu=descs, title="senscms")
 
 ########################################################
 
-@route('/graph/<node>')
-def graph(node):
+@route('/graph/<node>/<limit:int>')
+def graph(node, limit):
 	labels = []
 	units = []
 	cfg = Config()
 	base = Base()
-	
+
 	sensors = cfg.getSensorsNames(node)
 	nodes = cfg.getNodesNames()
 	descs = cfg.getSensorDesc()
+
+	grange = timerange[str(limit)]
 
 	local = config[node]['desc']
 	labels = [config[node]['sensors'][s]['desc'] for s in sensors]
 	units = [config[node]['sensors'][s]['unit'] for s in sensors]
 
-	return template('graph', active = 'graph', nodes_menu=nodes, descs_menu = descs, node=node, sensors=sensors, labels=labels, units=units, local=local, title='Ostatnie 48h dla %s' % (node))
+	return template('graph', active = 'graph', nodes_menu=nodes, descs_menu=descs, node=node, sensors=sensors, labels=labels, units=units, local=local, limit=limit, title='Ostatni(e) %s' % (grange))
 
 ########################################################
 
+@route('/api/<node>', method='GET')
 @route('/api/<node>/<sensor>/<limit:int>', method='GET')
-def get(node, sensor, limit):
+def get(node, sensor=None, limit=None):
+	'''
+	todo: dodac obsluge bledow
+	'''
 	response.content_type = 'text/json'
 	base = Base()
 	cfg = Config()
 	nodes = cfg.getNodesNames()
 	descs = cfg.getSensorDesc()
-
-	result = base.query(node, sensor, limit)
-	if not result:
-		abort(400, 'No data reveived')
+	try:
+		if node == 'all':
+			result = base.queryLast(nodes)
+		else:
+			result = base.query(node, sensor, limit)
+	except Exception:
+		abort(404)
 	return result
-
-########################################################
-
-@route('/tables', method='get')
-def tables():
-	'''
-	todo: poprawic sortowanie po dacie
-	http://www.datatables.net/forums/discussion/2467/need-help-for-sorting-date-with-ddmmyyyy-format/p1
-	'''
-	cfg = Config()
-	b = Base()
-
-	nodes = cfg.getNodesNames()
-	descs = cfg.getSensorDesc()
-
-	# hours to days
-	timeranges = OrderedDict([
-				('24h','1'),
-				('48h','2'),
-				('week','7'),
-				('month','30'),
-				('3 months','90'),
-				('year','365')
-				])
-
-	form_node = request.GET.get('node','').strip()
-	form_sensor = request.GET.get('sensor','').strip()
-	form_timerange = request.GET.get('timerange','').strip()
-	form_done = request.GET.get('done','').strip()
-
-	if request.GET.get('send','').strip():
-		try:
-			form_timerange = timeranges[form_timerange]
-		except:
-			return "error"
-
-		datatables = b.query(form_node, form_sensor, form_timerange, '1') # utc=1 wiec data 'normalna'
-
-		return template('tables', active = 'tables', nodes_menu=nodes, descs_menu = descs, nodes=cfg.getNodesNames(), done = form_done, datatables = datatables, timeranges = timeranges, title="Tabele")
-	return template('tables', active = 'tables', nodes_menu=nodes, descs_menu = descs, nodes=cfg.getNodesNames(), done = form_done, timeranges = timeranges,  title="Tabele")
 
 ########################################################
 
@@ -158,10 +133,58 @@ def static_js(filename):
 
 ########################################################
 
-@route('/style/:filename#.*#')
-def static_style(filename):
+@route('/static/:filename#.*#')
+def static_files(filename):
 	return static_file(filename, root=rootSN + '/static/')
 
 ########################################################
 
-run(host='0.0.0.0', port=8080, server='gunicorn')
+@error(404)
+def error404(error):
+    return 'Data not retrived'
+########################################################
+
+@route('/tables', method='get')
+def tables():
+	'''
+	todo: poprawic sortowanie po dacie
+	http://www.datatables.net/forums/discussion/2467/need-help-for-sorting-date-with-ddmmyyyy-format/p1
+	'''
+	cfg = Config()
+	b = Base()
+
+	nodes = cfg.getNodesNames()
+	descs = cfg.getSensorDesc()
+
+	# hours to days
+	timeranges = OrderedDict([
+				('24h','1'),
+				('48h','2'),
+				('week','7'),
+				('month','30'),
+				('3 months','90'),
+				('year','365')
+				])
+
+	form_node = request.GET.get('node','').strip()
+	form_sensor = request.GET.get('sensor','').strip()
+	form_timerange = request.GET.get('timerange','').strip()
+	form_done = request.GET.get('done','').strip()
+
+	if request.GET.get('send','').strip():
+		try:
+			form_timerange = timeranges[form_timerange]
+		except:
+			return "error"
+
+		datatables = b.query(form_node, form_sensor, form_timerange, '1') # utc=1 wiec data 'normalna'
+
+		return template('tables', active = 'tables', nodes_menu=nodes, descs_menu = descs, nodes=cfg.getNodesNames(), done = form_done, datatables = datatables, timeranges = timeranges, title="Tabele")
+	return template('tables', active = 'tables', nodes_menu=nodes, descs_menu = descs, nodes=cfg.getNodesNames(), done = form_done, timeranges = timeranges,  title="Tabele")
+
+########################################################
+
+run(host=config['settings']['webapp']['host'], 
+	port=config['settings']['webapp']['port'], 
+	server=config['settings']['webapp']['server']
+	)
