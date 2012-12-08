@@ -212,7 +212,7 @@ class Base(object):
 			if self.debug:
 				logging.debug('No data from node')
 		else:
-			i = str(self.jdata['nodeid'])[0]
+			i = str(self.jdata['nodeid']).rstrip('.0')
 			if self.debug:
 				logging.debug('Get data from %s' % i)
 			if i in self.nodes:		
