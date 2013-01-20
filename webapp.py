@@ -13,7 +13,6 @@ rootSN ='/home/artek/http/sensnode.suwalki.pl'
 from sensnode import *
 import simplejson
 from bottle import route, abort, error, template, response, request, run, static_file, jinja2_view as view, jinja2_template as template
-# import string
 
 debug = False
 
@@ -42,11 +41,11 @@ def home():
 	cfg = Config()
 
 	nodes = cfg.getNodesNames()
-	descs = cfg.getSensorDesc()
+	nodeinfo = cfg.crNodeInfo()
 
 	last = base.queryLast(nodes)
 	
-	return template('home', active = 'home', last=last, nodes_menu=nodes, descs_menu=descs, title="senscms")
+	return template('home', active = 'home', last=last, node_info=nodeinfo, title="senscms")
 
 ########################################################
 
@@ -58,8 +57,7 @@ def graph(node, limit):
 	base = Base()
 
 	sensors = cfg.getSensorsNames(node)
-	nodes = cfg.getNodesNames()
-	descs = cfg.getSensorDesc()
+	nodeinfo = cfg.crNodeInfo()
 
 	grange = timerange[str(limit)]
 
@@ -67,7 +65,7 @@ def graph(node, limit):
 	labels = [config[node]['sensors'][s]['desc'] for s in sensors]
 	units = [config[node]['sensors'][s]['unit'] for s in sensors]
 
-	return template('graph', active = 'graph', nodes_menu=nodes, descs_menu=descs, node=node, sensors=sensors, labels=labels, units=units, local=local, limit=limit, title='Ostatni(e) %s' % (grange))
+	return template('graph', active = 'graph', node_info=nodeinfo, node=node, sensors=sensors, labels=labels, units=units, local=local, limit=limit, title='%s' % (grange))
 
 ########################################################
 
@@ -81,7 +79,7 @@ def get(node, sensor=None, limit=None):
 	base = Base()
 	cfg = Config()
 	nodes = cfg.getNodesNames()
-	descs = cfg.getSensorDesc()
+
 	try:
 		if node == 'all':
 			result = base.queryLast(nodes)
@@ -96,20 +94,18 @@ def get(node, sensor=None, limit=None):
 @route('/contact')
 def contact():
 	cfg = Config()
-	nodes = cfg.getNodesNames()
-	descs = cfg.getSensorDesc()
+	nodeinfo = cfg.crNodeInfo()
 	
-	return template('contact', active = 'kontakt', nodes_menu=nodes, descs_menu = descs, title="Kontakt")	
+	return template('contact', active = 'kontakt', node_info=nodeinfo, title="Kontakt")	
 
 ########################################################
 
 @route('/live')
 def live():
 	cfg = Config()
-	nodes = cfg.getNodesNames()
-	descs = cfg.getSensorDesc()
+	nodeinfo = cfg.crNodeInfo()
 
-	return template('es', active = 'live', nodes_menu=nodes, descs_menu = descs, title="Live!")
+	return template('es', active = 'live', node_info=nodeinfo, title="Live!")
 
 ########################################################
 

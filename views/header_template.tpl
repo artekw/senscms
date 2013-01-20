@@ -6,7 +6,7 @@
     <meta name="description" content="senscms">
     <meta name="author" content="arteq">
 	
-    <link href="/static/bootstrap.css" rel="stylesheet" type="text/css"></link>
+    <link href="/static/bootstrap.min.css" rel="stylesheet" type="text/css"></link>
     <link href="/static/DT_bootstrap.css" rel="stylesheet" type="text/css"></link>
     <style type="text/css">
       body {
@@ -16,12 +16,15 @@
       
     </style>
     <link rel="shortcut icon" href="/style/favicon.ico">
-    <link href="/static/bootstrap-responsive.css" rel="stylesheet" type="text/css"></link>
+    <link href="/static/bootstrap-responsive.min.css" rel="stylesheet" type="text/css"></link>
     <link href="/static/custom.css" rel="stylesheet" type="text/css"></link>
-    <script language="javascript" type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script language="javascript" type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="http://d3js.org/d3.v2.min.js"></script>
     <script language="javascript" type="text/javascript" src="/js/highstock.js"></script>
     <script language="javascript" type="text/javascript" src="/js/jquery.dataTables.js"></script>
-    <script language="javascript" type="text/javascript" src="/js/bootstrap.js"></script>
+    <script language="javascript" type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/js/underscore-min.js"></script>
+    <script language="javascript" type="text/javascript" src="/js/gauge.js"></script>
  </head>
  <body>
  <div class="navbar navbar-inverse navbar-fixed-top">
@@ -34,8 +37,8 @@
               <li  class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Wykresy <b class="caret"></b></a>
                 <ul class="dropdown-menu">
-                  {% for n in nodes_menu %}
-                    <li><a href="/graph/{{n}}/2">{{n}}({{descs_menu[loop.index0]}})</a></li>
+                  {% for k, v in node_info.iteritems() %}
+                    <li><a href="/graph/{{k}}/2">{{k}}({{v}})</a></li>
                   {% endfor %}
                 </ul>
               </li>

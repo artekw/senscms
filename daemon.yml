@@ -17,17 +17,57 @@
             desc: 'Alarm baterii'
             unit: ''
             ongraph: 'false' # not implemented
+    desc: 'Pokoj A'
 
-    desc: 'nazwa'
+node6:
+    sensors:
+        humi:
+            desc: 'Wilgotnosc'
+            unit: '%'
+            alerton: '90' # not implemented
+        press:
+            desc: 'Cisnienie'
+            unit: 'kPa'
+        temp:
+            desc: 'Temperatura'
+            unit: '*C'
+        batvol:
+            desc: 'Nap. zasilania'
+            unit: 'V'
+        lobat:
+            desc: 'Alarm baterii'
+            unit: ''
+            ongraph: 'false' # not implemented
+    desc: 'Pokoj K'
+
+node25:
+    sensors:
+        vrms:
+            desc: 'Napiecie'
+            unit: 'V'
+        power1:
+            desc: 'Moc L1'
+            unit: 'W'
+        power2:
+            desc: 'Moc L2'
+            unit: 'W'
+        power3:
+            desc: 'Moc L3'
+            unit: 'W'
+        sumpower:
+            desc: 'Suma mocy'
+            unit: 'W'
+    desc: 'Power'
+    average: '60' # srednia z 60, not implemented
 
 settings:
     daemon:
         host: '192.168.88.15'
         port: 2000
     mysql:
-        username: 'admin'
-        password: 'pass'
-        dbase_name: 'base'
+        username: 'root'
+        password: 'arteqw22'
+        dbase_name: 'weather'
         host: '127.0.0.1'
     alerts:
         enabled: 'false' # not implemented

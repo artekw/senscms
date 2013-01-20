@@ -1,9 +1,10 @@
 {% include 'header_template.tpl' %}
 
 <div class="span2">
+	<!-- sidebar -->
     <div class="well sidebar-nav">
 		<ul class="nav nav-list">
-			<li class="nav-header">Sidebar</li>
+			<li class="nav-header">Zakres</li>
 			<li><a href="/graph/{{ node }}/1">24h</a></li>
 			<li><a href="/graph/{{ node }}/2">48h </a></li>
 			<li><a href="/graph/{{ node }}/7">Tydzień</a></li>
@@ -11,10 +12,17 @@
 			<li><a href="/graph/{{ node }}/90">3 miesiące</a></li>
 			<li><a href="/graph/{{ node }}/180">6 miesięcy</a></li>
 			<li><a href="/graph/{{ node }}/365">Rok</a></li>
-		</div><!--/.well -->
+		</ul>
+	</div>
+	<div class="well">
+		<span class="nav-header">Informacje</span>
+		<h6>Nazwa: {{node}}</h6>
+		<h6>Lokalizacja czunjka: {{local}}</h6>
+		<h6>Ilość czujników: {{ units|length }}</h6>
+	</div>
 	<div id="loader">
 		<div class="alert alert-info">
-  			<b>Wczytywanie...</b> <img src="/static/img/ajax-loader.gif">
+  			<center><img src="/static/img/ajax-loader.gif"></center>
 		</div>
 	</div>
 	<div id="done">
@@ -24,12 +32,6 @@
 	</div>
 </div>
 <div class="span10">
-<div class="page-header">
-	<h3>{{title}}</h3>
-	<h6>Nazwa: {{node}}</h6>
-	<h6>Lokalizacja czunjka: {{local}}</h6>
-	<h6>Ilość czujników: {{ units|length }}</h6>
-</div>
 
 	<div class="btn-group" data-toggle="buttons-radio">
 		{% for s in sensors %}
@@ -63,6 +65,10 @@ $.ajax({
  }
 $(document).ready(function() {
 
+	var url = window.location;
+	$('ul.nav a').filter(function() {
+    	return this.href == url;
+	}).parent().addClass('active');
 
 	Highcharts.setOptions({
 	lang: {
@@ -74,6 +80,7 @@ $(document).ready(function() {
 		chart = new Highcharts.StockChart({
 		    chart: {
 		        renderTo: 'graph',
+		        type: "spline",
 		        events: { load: requestData(sens) },
 		    },	
 			
@@ -90,8 +97,9 @@ $(document).ready(function() {
 				enabled : false
 			},
 			plotOptions: {
-				line: {
-					connectNulls: false,
+				spline: {
+					//connectNulls: false,
+					turboThreshold: 2000,
 					lineWidth: 2
 				}
 			},
@@ -174,16 +182,22 @@ $(document).ready(function() {
 				color: '#287AA9',
 		        tooltip: {
 		        	valueDecimals: 2
-		        }
+		        },
+		        dataGrouping: {
+        			enabled: true,
+        			smoothed: true
+    			}
 		    }],
 		});
-	});		
+	});	
+
 {% for s in sensors %}
 $(".{{s}}").click(function () 
      { 
        requestData("{{s}}")
      });
 {% endfor %}
+
 </script>
 
 {% include 'footer_template.tpl' %}

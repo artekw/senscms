@@ -9,11 +9,13 @@ __email__ = 'arteqw@gmail.com'
 
 # TODO:
 # - testy, testy
-# - wysyłanie do sesnnode - OOK (On-Off-Keyring)
+# - wysyłanie do sesnbase- OOK (On-Off-Keyring)
 # - alery na maila, jabbera
 # - ujenolicic plik konfiguracyjny
 # - dodawanie kolumn do istniejacej tabeli
 # - OperationalError: (1054, "Unknown column 'press' in 'field list'")
+# - slownik NodeInfo - tylko to stosowac
+# - power@home
 
 
 import socket
@@ -86,6 +88,10 @@ class Config(object):
 			desc = self.config[node]['desc']
 			self.descs.append(desc)
 		return self.descs
+
+	def crNodeInfo(self):
+		"""Tworzy slownik nodeid:opis"""
+		return dict(zip(self.getNodesNames(), self.getSensorDesc()))
 
 ########################################################
 
@@ -176,6 +182,7 @@ class Base(object):
 					sys.exit(e)
 					# float temp ?
 				SQL = "CREATE TABLE %s (id serial PRIMARY KEY, date timestamp, %s varchar(10))" % (self.tname, " float, ".join(str(x) for x in slist))
+				# czemu ostatia to varint ?
 				try:
 					print SQL
 					self.cur.execute(SQL);
